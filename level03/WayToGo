@@ -1,0 +1,25 @@
+debut classique je regarde le code 
+et donc je vois qu'on nous demande un password que main envoie a test et que test decrypte
+pour voir si il est bon
+
+on voit que test prend 2 arg du coup le arg qu'on lui envoi et un autre qui est 0x1337d00d
+ce qui est egale a 322424845 en decimal
+
+du coup j'ai regarder et j'ai vue que qu'ils on un int pEVar1 qui est egale a parm2 donc le 322424845 - param1
+
+en suite je vois 0x15 qui est egale a 21 en decimal et du coup si la dif et plus grande que 21 alors ca nous renvoit 
+Invalid Password
+
+du coup je vais tester 322424845 ca marche pas 
+je vais decrementer jusqu'a que ca marche
+
+ENFIN bon apres 17 try ca marche
+level03@OverRide:~$ ./level03
+***********************************
+*               level03         **
+***********************************
+Password:322424827
+$ cat /home/users/level04/.pass
+kgv3tkEb9h2mLkRsPkXRfc2mHbjMxQzvb2FrgKkf
+
+HOP VOILA

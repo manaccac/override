@@ -1,0 +1,49 @@
+Une fois la traduction fini c'est assez simple
+
+un ptrace empeche l'utilisation de gdb dont on doit le bypass
+
+et il y a ensuite un cmp entre le code que l'on donne et un hash() du login donné
+
+suffit juste de savoir ce que renvoie selon le login la fonction hash et c'est gg (login > 6 caracteres)
+
+breakpoint > *0x080487ba pour pouvoir bypass la comparaison de ptrace
+
+breakpoint > *0x08048866 pour pouvoir print le contenu de la comparaison avec le hash
+
+(gdb) r
+Starting program: /home/users/level06/level06
+***********************************
+*               level06           *
+***********************************
+-> Enter Login: Pisskink
+***********************************
+***** NEW ACCOUNT DETECTED ********
+***********************************
+-> Enter Serial: OuaisMec
+
+maintenant on bypass ptrace
+
+(gdb) p $eax=0
+$1 = 0
+(gdb) continue
+
+et on print le DWORD PTR [ebp-0x10]
+
+x/d $ebp-0x10
+0xffffd6a8:     6234469
+
+on sait dont que pour l'user Pisskink le serial est 6234469
+
+
+level06@OverRide:~$ ./level06
+***********************************
+*               level06           *
+***********************************
+-> Enter Login: Pisskink
+***********************************
+***** NEW ACCOUNT DETECTED ********
+***********************************
+-> Enter Serial: 6234469
+Authenticated!
+$ cat /home/users/level07/.pass
+GbcPDRgsFK77LNnnuh7QyFYA2942Gp8yKj9KrWD8

